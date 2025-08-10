@@ -1,0 +1,20 @@
+1. Basics of Partitioning in MySQL
+Partitioning in MySQL means splitting a table into multiple physical parts (called partitions) while still treating it as a single logical table.
+This can improve query performance and help with data management.
+
+Types of partitioning in MySQL:
+
+RANGE – Rows are stored based on a range of values in a column.
+
+LIST – Rows are stored based on a list of discrete values.
+
+HASH – Rows are stored based on a hash function.
+
+KEY – Similar to HASH but uses MySQL's internal function.
+
+2. Rules & Limitations
+Partitioning is only supported for InnoDB and NDB engines.
+
+The partition column must be part of all unique keys (including primary key).
+
+Max 1024 partitions per table.
