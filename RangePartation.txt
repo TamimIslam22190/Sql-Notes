@@ -1,0 +1,95 @@
+1. Definition
+Partitioning in MySQL is the process of splitting a table into multiple smaller, more manageable pieces (partitions) while still treating it as a single logical table.
+
+Each partition can store a subset of the data based on a defined rule (range, list, hash, etc.).
+
+2. Why We Need Partitioning
+Performance improvement for large tables — queries can skip irrelevant partitions.
+
+Efficient data management — you can drop or archive partitions without touching the rest of the table.
+
+Better maintenance — e.g., removing old logs without deleting from the whole table.
+
+Parallel processing — MySQL can query multiple partitions in parallel.
+
+3. When to Use Partitioning
+Use partitioning when:
+
+Table size is huge (millions/billions of rows).
+
+Queries often filter data by a column with a natural split (e.g., date ranges, IDs).
+
+You need to purge old data regularly.
+
+The dataset fits logically into chunks.
+
+Avoid partitioning when:
+
+The table is small — overhead might make it slower.
+
+Your queries don’t benefit from skipping partitions.
+
+4. RANGE Partition Example in MySQL
+We will create a sales table partitioned by year.
+
+SQL Example
+sql
+Copy
+Edit
+CREATE DATABASE IF NOT EXISTS demo_partition;
+USE demo_partition;
+
+-- Drop if exists for re-run
+DROP TABLE IF EXISTS sales;
+
+CREATE TABLE sales (
+    id INT NOT NULL,
+    product_name VARCHAR(50),
+    sales_year INT,
+    amount DECIMAL(10,2),
+    PRIMARY KEY (id, sales_year)
+)
+PARTITION BY RANGE (sales_year) (
+    PARTITION p0 VALUES LESS THAN (2019),
+    PARTITION p1 VALUES LESS THAN (2020),
+    PARTITION p2 VALUES LESS THAN (2021),
+    PARTITION p3 VALUES LESS THAN (2022),
+    PARTITION p4 VALUES LESS THAN MAXVALUE
+);
+
+-- Insert sample data
+INSERT INTO sales VALUES
+(1, 'Laptop', 2018, 800.00),
+(2, 'Phone', 2019, 500.00),
+(3, 'Tablet', 2020, 300.00),
+(4, 'Monitor', 2021, 150.00),
+(5, 'Keyboard', 2023, 50.00);
+
+-- Check data
+SELECT * FROM sales;
+
+-- See which partition each row is in
+SELECT 
+    id, product_name, sales_year, amount, 
+    PARTITION_NAME
+FROM information_schema.PARTITIONS
+JOIN sales 
+ON sales.sales_year BETWEEN 0 AND 9999
+WHERE TABLE_NAME = 'sales';
+
+
+Expected Output (SELECT * FROM sales)
+id	product_name	sales_year	amount
+1	Laptop	2018	800.00
+2	Phone	2019	500.00
+3	Tablet	2020	300.00
+4	Monitor	2021	150.00
+5	Keyboard	2023	50.00
+
+Expected Output (Partition info)
+id	product_name	sales_year	amount	PARTITION_NAME
+1	Laptop	2018	800.00	p0
+2	Phone	2019	500.00	p1
+3	Tablet	2020	300.00	p2
+4	Monitor	2021	150.00	p3
+5	Keyboard	2023	50.00	p4
